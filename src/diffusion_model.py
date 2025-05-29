@@ -148,6 +148,16 @@ class DiffusionUNet(nn.Module):
         dropout: float,
     ):
         super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.base_channels = base_channels
+        self.image_resolution = image_resolution
+        self.num_res_blocks = num_res_blocks
+        self.channel_multipliers = channel_multipliers
+        self.attention_resolutions = attention_resolutions
+        self.resample_with_conv = resample_with_conv
+        self.time_emb_dim = time_emb_dim
+        self.dropout = dropout
 
         group_norm_groups = 32
         theta = 10000
@@ -265,6 +275,21 @@ class DiffusionUNet(nn.Module):
         x = self.final_act(x)
         x = self.conv_out(x)
         return x
+
+    def config(self) -> dict:
+        """Return model configuration as a dictionary."""
+        return {
+            "in_channels": self.in_channels,
+            "out_channels": self.out_channels,
+            "base_channels": self.base_channels,
+            "image_resolution": self.image_resolution,
+            "num_res_blocks": self.num_res_blocks,
+            "channel_multipliers": self.channel_multipliers,
+            "attention_resolutions": self.attention_resolutions,
+            "resample_with_conv": self.resample_with_conv,
+            "time_emb_dim": self.time_emb_dim,
+            "dropout": self.dropout,
+        }
 
 
 if __name__ == "__main__":
