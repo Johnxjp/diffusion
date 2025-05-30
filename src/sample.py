@@ -16,8 +16,6 @@ def ddim_sampler(
 
     model.eval()
     with torch.no_grad():
-
-        # Generate initial noise
         x = torch.randn(
             batch_size,
             model.in_channels,
@@ -25,14 +23,12 @@ def ddim_sampler(
             model.image_resolution,
             device=device,
         )
-
         for i in tqdm(reversed(range(0, timesteps, step_size)), desc="Sampling"):
             t_batch = torch.tensor([i], device=device)
-            noise_level = noise_rates[t_batch].view(-1, 1, 1, 1).to(device)
-            signal_level = signal_rates[t_batch].view(-1, 1, 1, 1).to(device)
-
-            noise_variance = ((noise_level) ** 2).reshape(batch_size)
-            predicted_noise = model(x, noise_variance)
+            noise_level = noise_rates[t_batch].repeat(batch_size).view(-1, 1, 1, 1).to(device)
+            signal_level = signal_rates[t_batch].repeat(batch_size).view(-1, 1, 1, 1).to(device)
+            noise_variance = (noise_level) ** 2
+            predicted_noise = model(x, noise_variance.squeeze())
             pred_images = (x - noise_level * predicted_noise) / signal_level
 
             # When we're training we're always starting from
@@ -49,7 +45,8 @@ def ddim_sampler(
 
         # Normalize to [0, 1] range for display
         x = x.clamp(0, 1)
-        return x
+
+    return x
 
 
 def ddpm_sampler(
@@ -75,9 +72,7 @@ def ddpm_sampler(
         for t in tqdm(reversed(range(timesteps)), desc="DDPM Sampling"):
             # Predict noise
             alpha_bar_t = signal_rates[t] ** 2
-            alpha_bar_prev = (
-                signal_rates[t - 1] ** 2 if t > 0 else torch.tensor(1.0, device=device)
-            )
+            alpha_bar_prev = signal_rates[t - 1] ** 2 if t > 0 else torch.tensor(1.0, device=device)
             alpha_t = alpha_bar_t / alpha_bar_prev if t > 0 else alpha_bar_t
             noise_variance = (noise_rates[t] ** 2).reshape(batch_size)
             predicted_noise = model(x, noise_variance)
@@ -104,3 +99,5 @@ def ddpm_sampler(
                 x = pred_x0
 
     return x.clamp(0, 1)
+
+
