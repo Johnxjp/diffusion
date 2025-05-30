@@ -109,15 +109,7 @@ def train(
 
             if checkpoint_path and (epoch + 1) % checkpoint_interval == 0:
                 print(f"Saving checkpoint for epoch {epoch + 1}...")
-                save_checkpoint(
-                    checkpoint_path,
-                    model,
-                    model.config(),
-                    optimizer,
-                    epoch,
-                    train_loss=avg_loss,
-                    val_loss=avg_val_loss,
-                )
+                torch.save(model.state_dict(), checkpoint_path)
 
             if avg_val_loss < best_val_loss:
                 best_val_loss = avg_val_loss

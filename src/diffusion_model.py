@@ -291,6 +291,34 @@ class DiffusionUNet(nn.Module):
             "dropout": self.dropout,
         }
 
+    def save_weights(self, path: str):
+        """Save the model state dictionary to a file."""
+        torch.save(self.state_dict(), path)
+
+    def load_weights(self, path: str):
+        """Load the model state dictionary from a file."""
+        checkpoint = torch.load(path, map_location="cpu")
+        self.load_state_dict(checkpoint)
+        return self
+
+    def save(self, path: str):
+        """Save the model state dictionary and configuration."""
+        torch.save(
+            {
+                "model_state_dict": self.state_dict(),
+                "model_config": self.config(),
+            },
+            path,
+        )
+
+    @staticmethod
+    def create_from_save(path: str) -> "DiffusionUNet":
+        """Create a model instance from a saved configuration dictionary."""
+        checkpoint = torch.load(path)
+        model = DiffusionUNet(**checkpoint["model_config"])
+        model.load_state_dict(checkpoint["model_state_dict"])
+        return model
+
 
 if __name__ == "__main__":
     # Example usage
